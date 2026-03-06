@@ -51,18 +51,6 @@ npm run dev
 
 默认前端读取 `VITE_API_BASE_URL=http://127.0.0.1:8000`。
 
-## macOS 一键安装与启动
-```bash
-./scripts/install_macos.sh
-./scripts/run_backend.sh
-./scripts/run_frontend.sh
-```
-
-脚本会自动处理：
-- 安装 `ffmpeg` / `python` / `node`（通过 Homebrew）
-- 创建 `backend/.venv` 并安装 Python 依赖
-- 安装 frontend `node_modules`
-
 ## 环境变量
 复制 `.env.example`，常用项：
 - `MAX_UPLOAD_MB`
@@ -86,8 +74,6 @@ npm run build
 ```
 
 ## 常见问题
-1. **`npm: command not found`**：执行 `brew install node`，或直接运行 `./scripts/install_macos.sh` 自动安装。
-2. **`uvicorn: command not found`**：请通过 `./scripts/run_backend.sh` 启动（脚本会自动激活 `backend/.venv` 并使用 `python -m uvicorn`）。
-3. **ffmpeg/ffprobe 不存在**：请先在系统安装 ffmpeg（`./scripts/install_macos.sh` 会自动安装）。
-4. **ASR 下载模型慢**：首次运行 `faster-whisper` 可能需要下载模型。
-5. **smoke test 被跳过**：仓库默认不附带大视频样例，补充到 `backend/tests/assets/sample_3min.mp4` 即可运行。
+1. **ffmpeg/ffprobe 不存在**：请先在系统安装 ffmpeg。
+2. **ASR 下载模型慢**：首次运行 `faster-whisper` 可能需要下载模型。
+3. **smoke test 被跳过**：仓库默认不附带大视频样例，补充到 `backend/tests/assets/sample_3min.mp4` 即可运行。
