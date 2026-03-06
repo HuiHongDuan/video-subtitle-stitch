@@ -1,29 +1,38 @@
 # Video Subtitle App · Stitch Frontend Rebuild
 
-这是一套为 Codex 准备的“重跑项目”骨架：
-- 保留 `video-subtitle-app` 的核心业务能力：上传视频、中文 ASR、生成 SRT、烧录字幕、可选静音输出。
-- 用 `ai-subtitles-ui.zip` 的 Stitch 风格前端替换原来的 Streamlit UI。
-- 将系统拆为：`frontend` (Vite + React) + `backend` (FastAPI + 复用原 Python pipeline)。
-
-## 设计目标
-1. **不改变业务能力**：处理参数、输出产物、字幕自适应规则、评测口径保持一致。
-2. **替换前端交互层**：把 Stitch demo 改造成真实可用的上传/轮询/下载界面。
-3. **让 Codex 可继续开发**：文档、环境变量、测试、脚本、目录结构全部齐备。
+将原 `video-subtitle-app` 的 Streamlit 前端替换为 Stitch 风格 Web 前端，保留核心视频字幕处理能力：上传视频、ASR 转写、SRT 生成、字幕烧录、静音输出、结果下载。
 
 ## 项目结构
 ```text
 .
 ├── backend/                  # FastAPI API + Python subtitle pipeline
-├── frontend/                 # Stitch 风格 React UI
-├── scripts/                  # 本地启动 / smoke test / 安装脚本
-├── SPEC.md
+├── frontend/                 # React + TypeScript + Vite + Stitch 风格 UI
+├── scripts/                  # 本地启动 / smoke test 脚本
 ├── ARCHITECTURE.md
-├── TASKS.md
+├── SPEC.md
 ├── TEST_PLAN.md
-└── CODEX_PROMPT.md
+└── .env.example
 ```
 
-## 本地开发
+## 功能覆盖
+- ✅ 上传视频
+- ✅ 选择模型（tiny/base/small/medium）
+- ✅ 选择是否静音输出
+- ✅ 创建任务并轮询状态
+- ✅ 下载 SRT
+- ✅ 下载烧录视频
+- ✅ 统一错误返回
+
+## API 概览
+- `GET /healthz`
+- `GET /api/v1/models`
+- `POST /api/v1/uploads`
+- `POST /api/v1/jobs`
+- `GET /api/v1/jobs/{job_id}`
+- `GET /api/v1/jobs/{job_id}/files/subtitles`
+- `GET /api/v1/jobs/{job_id}/files/video`
+
+## 本地启动
 ### 1) Backend
 ```bash
 cd backend
@@ -42,7 +51,43 @@ npm run dev
 
 默认前端读取 `VITE_API_BASE_URL=http://127.0.0.1:8000`。
 
-## Codex 执行顺序建议
-1. 先补全 `backend/app/services/pipeline_service.py` 与任务状态管理。
-2. 接着把 `frontend/src/App.tsx` 与 `frontend/src/lib/api.ts` 接通真实接口。
-3. 最后跑 `scripts/smoke_test.sh` 与 `pytest`。
+## macOS 一键安装与启动
+```bash
+./scripts/install_macos.sh
+./scripts/run_backend.sh
+./scripts/run_frontend.sh
+```
+
+脚本会自动处理：
+- 安装 `ffmpeg` / `python` / `node`（通过 Homebrew）
+- 创建 `backend/.venv` 并安装 Python 依赖
+- 安装 frontend `node_modules`
+
+## 环境变量
+复制 `.env.example`，常用项：
+- `MAX_UPLOAD_MB`
+- `DEFAULT_MODEL_SIZE`
+- `WORKDIR_ROOT`
+- `CORS_ORIGINS`
+- `VITE_API_BASE_URL`
+
+## 测试
+### backend
+```bash
+cd backend
+pytest -q
+```
+
+### frontend
+```bash
+cd frontend
+npm run lint
+npm run build
+```
+
+## 常见问题
+1. **`npm: command not found`**：执行 `brew install node`，或直接运行 `./scripts/install_macos.sh` 自动安装。
+2. **`uvicorn: command not found`**：请通过 `./scripts/run_backend.sh` 启动（脚本会自动激活 `backend/.venv` 并使用 `python -m uvicorn`）。
+3. **ffmpeg/ffprobe 不存在**：请先在系统安装 ffmpeg（`./scripts/install_macos.sh` 会自动安装）。
+4. **ASR 下载模型慢**：首次运行 `faster-whisper` 可能需要下载模型。
+5. **smoke test 被跳过**：仓库默认不附带大视频样例，补充到 `backend/tests/assets/sample_3min.mp4` 即可运行。

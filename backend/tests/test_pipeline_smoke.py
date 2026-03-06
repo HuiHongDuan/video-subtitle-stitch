@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+
 import pytest
 
 from app.domain.eval import evaluate_srt
@@ -33,9 +34,8 @@ def test_smoke_pipeline(tmp_path: Path):
     assert mp4.exists() and mp4.stat().st_size > 0
     validate_output_video(str(mp4))
     text = srt.read_text(encoding='utf-8', errors='ignore')
-    assert text.count('
+    assert text.count('\n\n') >= 5
 
-') >= 5
     if GOLD_SRT.exists():
         gold_text = GOLD_SRT.read_text(encoding='utf-8', errors='ignore')
         metrics = evaluate_srt(text, gold_text, min_iou=_env_float('EVAL_MIN_IOU', 0.5))

@@ -1,15 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Film, VolumeX, Volume2, FileText, Sun, Moon, Upload, Download } from 'lucide-react';
-import { createJob, resolveDownloadUrl } from './lib/api';
+import { createJob, listModels, resolveDownloadUrl, uploadFile } from './lib/api';
 import { useJobPolling } from './hooks/useJobPolling';
 import { StatusBadge } from './components/StatusBadge';
 
-const MODEL_OPTIONS = ['tiny', 'base', 'small', 'medium'] as const;
+const ACCEPTED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/x-matroska', 'video/x-msvideo', 'video/webm'];
 
 export default function App() {
   const [isDark, setIsDark] = useState(false);
   const [removeAudio, setRemoveAudio] = useState(true);
-  const [modelSize, setModelSize] = useState<(typeof MODEL_OPTIONS)[number]>('small');
+  const [modelOptions, setModelOptions] = useState<string[]>(['tiny', 'base', 'small', 'medium']);
+  const [modelSize, setModelSize] = useState('small');
   const [file, setFile] = useState<File | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -20,6 +21,18 @@ export default function App() {
     document.documentElement.classList.toggle('dark', isDark);
   }, [isDark]);
 
+  useEffect(() => {
+    listModels()
+      .then((models) => {
+        const options = models.options.map((item) => item.key);
+        if (options.length > 0) {
+          setModelOptions(options);
+        }
+        setModelSize(models.default);
+      })
+      .catch((err) => setSubmitError(err instanceof Error ? err.message : '加载模型配置失败'));
+  }, []);
+
   const combinedError = submitError ?? pollingError ?? job?.error ?? null;
   const progressText = useMemo(() => {
     if (!job) return '等待上传视频';
@@ -29,11 +42,21 @@ export default function App() {
   }, [job]);
 
   async function handleSubmit() {
-    if (!file) return;
+    if (!file) {
+      setSubmitError('请先选择视频文件');
+      return;
+    }
+
+    if (file.type && !ACCEPTED_VIDEO_TYPES.includes(file.type)) {
+      setSubmitError('仅支持 mp4 / mov / mkv / avi / webm 视频格式');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       setSubmitError(null);
-      const created = await createJob(file, removeAudio, modelSize);
+      const upload = await uploadFile(file);
+      const created = await createJob(upload.upload_id, removeAudio, modelSize);
       setJobId(created.job_id);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : '提交失败');
@@ -94,7 +117,7 @@ export default function App() {
             </div>
 
             <div className="flex items-center gap-2 bg-white/30 dark:bg-gray-800/30 p-1.5 rounded-full border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm flex-wrap">
-              {MODEL_OPTIONS.map((option) => (
+              {modelOptions.map((option) => (
                 <button
                   key={option}
                   onClick={() => setModelSize(option)}
