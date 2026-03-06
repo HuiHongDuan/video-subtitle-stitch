@@ -8,6 +8,17 @@ class CreateJobResponse(BaseModel):
     job_id: str
     status: JobStatus
 
+
+class UploadResponse(BaseModel):
+    upload_id: str
+    filename: str
+    size_bytes: int
+
+
+class ErrorResponse(BaseModel):
+    error: str
+    code: str
+
 class Resolution(BaseModel):
     width: int
     height: int
@@ -27,3 +38,12 @@ class JobState(BaseModel):
     filename: Optional[str] = None
     error: Optional[str] = None
     result: Optional[JobResult] = None
+
+
+class ModelOption(BaseModel):
+    key: str
+
+
+class ModelsResponse(BaseModel):
+    default: str
+    options: list[ModelOption]
