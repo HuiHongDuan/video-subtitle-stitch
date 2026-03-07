@@ -1,29 +1,36 @@
 # TEST PLAN
 
-## 1. 单元测试
-### backend
-- `test_subtitles.py`
-  - 中文换行不超过最大行数
-  - 每行长度不超过 `max_chars_per_line`
-- `test_eval.py`
-  - SRT 解析正确
-  - 时间重叠与文本相似度计算正确
-- `test_api_contract.py`
-  - 创建任务接口返回 `job_id`
-  - 查询状态接口返回标准字段
+## Backend
+1. 配置与导入
+   - FastAPI app 可导入
+   - settings 默认值可加载
+2. API 合约
+   - `GET /healthz` 返回 `{"ok": true}`
+   - `GET /api/v1/models` 返回可选模型与默认模型
+   - `GET /api/v1/jobs/{missing}` 返回统一错误结构
+   - `POST /api/v1/jobs` 参数校验（非法 model_size）
+3. 领域单元测试
+   - 字幕换行/生成 SRT
+   - 评测指标计算
+4. Smoke test
+   - 若 `tests/assets/sample_3min.mp4` 存在，执行 pipeline 全链路
 
-## 2. Smoke Test
-当 `backend/tests/assets/sample_3min.mp4` 存在时：
-1. 调用 pipeline 生成 `audio.wav`
-2. 调用 ASR 生成 segments
-3. 生成 `subtitles.srt`
-4. 烧录为 `output.mp4`
-5. 可选地与 `golden.srt` 比较
+## Frontend
+1. `npm run lint` (TypeScript noEmit)
+2. `npm run build` (Vite build)
+3. 人工验证状态流转：上传、处理中、完成、失败
 
-## 3. 前端人工验证
-- 上传文件后文件名显示正确
-- 选择静音/模型参数后发起请求
-- 处理中显示阶段与进度
-- 完成后两个下载按钮可用
-- 错误状态下显示错误信息
-- 亮/暗主题切换不影响布局
+## 手工验收清单
+- 上传限制与文件类型提示正确
+- 模型列表来自后端接口
+- 长任务可轮询
+- 结果下载按钮仅在可用时可点
+- 错误消息对用户可读
+
+
+## Docker 验证
+1. `docker compose config`
+2. `docker compose up -d --build`
+3. `curl http://127.0.0.1:8000/healthz`
+4. 打开 `http://127.0.0.1:3000`
+5. `docker compose down`

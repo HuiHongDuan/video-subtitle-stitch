@@ -1,0 +1,40 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: video-subtitle-backend
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8000
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://127.0.0.1:3000,http://localhost:3000}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-500}
+      DEFAULT_MODEL_SIZE: ${DEFAULT_MODEL_SIZE:-small}
+      WORKDIR_ROOT: /data/workdir
+      FONTSIZE_RATIO: ${FONTSIZE_RATIO:-0.05}
+      FONTSIZE_MIN: ${FONTSIZE_MIN:-18}
+      FONTSIZE_MAX: ${FONTSIZE_MAX:-56}
+      MARGINV_RATIO: ${MARGINV_RATIO:-0.06}
+      MARGINV_MIN: ${MARGINV_MIN:-24}
+      MARGINV_MAX: ${MARGINV_MAX:-80}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/workdir:/data/workdir
+      - whisper_cache:/root/.cache/huggingface
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: video-subtitle-frontend
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://127.0.0.1:8000}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  whisper_cache:
