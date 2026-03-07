@@ -26,3 +26,11 @@
 - 长任务可轮询
 - 结果下载按钮仅在可用时可点
 - 错误消息对用户可读
+
+
+## Docker 验证
+1. `docker compose config`
+2. `docker compose up -d --build`
+3. `curl http://127.0.0.1:8000/healthz`
+4. 打开 `http://127.0.0.1:3000`
+5. `docker compose down`

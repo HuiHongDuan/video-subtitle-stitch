@@ -35,3 +35,9 @@
 - 前后端解耦：UI 不直接调用 ffmpeg/whisper，全部走 API。
 - 上传与任务分离：为后续扩展分片上传/重试预留能力。
 - 错误格式统一：前端可稳定显示可读错误信息。
+
+
+## Docker 部署视图
+- `backend/Dockerfile`：Python 3.12 + ffmpeg + FastAPI 服务。
+- `frontend/Dockerfile`：Node 20 + Vite dev server。
+- `docker-compose.yml`：编排 frontend/backend，暴露 3000/8000，挂载 `backend/workdir` 与模型缓存 volume。

@@ -36,3 +36,10 @@
 ## 测试范围
 - backend: 健康检查、模型接口、参数校验、任务查询、字幕/评测单元测试、可选 pipeline smoke test
 - frontend: TypeScript 类型检查 + 构建验证
+
+
+## 运行形态
+- 本地原生运行（venv + npm）
+- Docker 运行（frontend/backend 容器编排）
+
+Docker 目标是隔离宿主机依赖，尤其适用于 macOS 场景。
