@@ -88,9 +88,9 @@ export default function App() {
         <div className="relative z-10 flex flex-col items-center">
           <div className="mb-10 flex flex-col items-center">
             <div className="w-20 h-20 rounded-full glass-logo-button flex items-center justify-center mb-4">
-              <span className="text-3xl font-extrabold text-gray-800 dark:text-white tracking-tighter">AI</span>
+              <span className="text-3xl font-extrabold tracking-tighter brand-ai-text">AI</span>
             </div>
-            <h1 className="text-sm font-bold tracking-[0.3em] text-gray-600 dark:text-gray-300 uppercase">Subtitles</h1>
+            <h1 className="text-sm font-bold tracking-[0.3em] uppercase brand-subtitle">Subtitles</h1>
           </div>
 
           <div className="w-full mb-8">
@@ -124,7 +124,7 @@ export default function App() {
                   <Volume2 className="w-6 h-6 text-gray-600 dark:text-gray-300 group-hover:text-primary transition-colors" />
                 )}
               </button>
-              <span className="text-sm text-gray-700 dark:text-gray-300">{removeAudio ? '输出静音' : '保留原音频'}</span>
+              <span className="text-sm ui-label">{removeAudio ? '输出静音' : '保留原音频'}</span>
             </div>
 
             <div className="flex items-center gap-2 bg-white/30 dark:bg-gray-800/30 p-1.5 rounded-full border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm flex-wrap">
@@ -132,7 +132,7 @@ export default function App() {
                 <button
                   key={option}
                   onClick={() => setModelSize(option)}
-                  className={`px-4 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all ${modelSize === option ? 'bg-primary text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-white/50 dark:hover:bg-gray-700/50'}`}
+                  className={`px-4 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all ${modelSize === option ? 'bg-primary text-white shadow-sm' : 'text-slate-700 dark:text-gray-200 hover:bg-white/50 dark:hover:bg-gray-700/50'}`}
                   title={`Model ${option}`}
                 >
                   {option}
@@ -142,7 +142,7 @@ export default function App() {
           </div>
 
           <div className="w-full mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <label className="flex flex-col gap-2 text-sm text-gray-700 dark:text-gray-300">
+            <label className="flex flex-col gap-2 text-sm ui-label">
               剪辑开始秒数
               <input
                 type="number"
@@ -154,7 +154,7 @@ export default function App() {
                 placeholder="0"
               />
             </label>
-            <label className="flex flex-col gap-2 text-sm text-gray-700 dark:text-gray-300">
+            <label className="flex flex-col gap-2 text-sm ui-label">
               剪辑结束秒数（可留空=到结尾）
               <input
                 type="number"
@@ -178,7 +178,7 @@ export default function App() {
 
           <div className="w-full pt-2 flex flex-col items-center gap-6">
             <StatusBadge job={job} />
-            <div className="text-sm text-gray-700 dark:text-gray-300">{progressText}</div>
+            <div className="text-sm ui-label">{progressText}</div>
             {combinedError && <div className="text-sm text-rose-500 text-center">{combinedError}</div>}
 
             {job?.result && (
@@ -191,24 +191,24 @@ export default function App() {
             <div className="flex w-full gap-4 flex-wrap">
               <a
                 href={videoUrl ?? '#'}
-                className={`flex-1 flex items-center justify-center gap-3 py-4 px-6 rounded-2xl glass-input border border-white/50 dark:border-white/10 transition-all duration-300 group ${videoUrl ? 'hover:border-blue-400 hover:shadow-[0_0_15px_rgba(96,165,250,0.5)]' : 'pointer-events-none opacity-50'}`}
+                className={`flex-1 flex items-center justify-center gap-3 py-4 px-6 rounded-2xl glass-input border border-white/50 dark:border-white/10 transition-all duration-300 group ${videoUrl ? 'hover:border-blue-400 hover:shadow-[0_0_15px_rgba(96,165,250,0.5)]' : 'pointer-events-none opacity-75'}`}
               >
                 <Download className="w-6 h-6 text-blue-500" />
-                <span className="font-semibold text-gray-800 dark:text-gray-100">下载视频</span>
+                <span className="font-semibold action-btn-label">下载视频</span>
               </a>
               <a
                 href={srtUrl ?? '#'}
-                className={`flex-1 flex items-center justify-center gap-3 py-4 px-6 rounded-2xl glass-input border border-white/50 dark:border-white/10 transition-all duration-300 group ${srtUrl ? 'hover:border-fuchsia-400 hover:shadow-[0_0_15px_rgba(232,121,249,0.5)]' : 'pointer-events-none opacity-50'}`}
+                className={`flex-1 flex items-center justify-center gap-3 py-4 px-6 rounded-2xl glass-input border border-white/50 dark:border-white/10 transition-all duration-300 group ${srtUrl ? 'hover:border-fuchsia-400 hover:shadow-[0_0_15px_rgba(232,121,249,0.5)]' : 'pointer-events-none opacity-75'}`}
               >
                 <FileText className="w-6 h-6 text-fuchsia-500" />
-                <span className="font-semibold text-gray-800 dark:text-gray-100">下载字幕</span>
+                <span className="font-semibold action-btn-label">下载字幕</span>
               </a>
               <a
                 href={silentUrl ?? '#'}
-                className={`flex-1 flex items-center justify-center gap-3 py-4 px-6 rounded-2xl glass-input border border-white/50 dark:border-white/10 transition-all duration-300 group ${silentUrl ? 'hover:border-emerald-400 hover:shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'pointer-events-none opacity-50'}`}
+                className={`flex-1 flex items-center justify-center gap-3 py-4 px-6 rounded-2xl glass-input border border-white/50 dark:border-white/10 transition-all duration-300 group ${silentUrl ? 'hover:border-emerald-400 hover:shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'pointer-events-none opacity-75'}`}
               >
                 <Download className="w-6 h-6 text-emerald-500" />
-                <span className="font-semibold text-gray-800 dark:text-gray-100">下载无声无字幕版</span>
+                <span className="font-semibold action-btn-label">下载无声无字幕版</span>
               </a>
             </div>
           </div>

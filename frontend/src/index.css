@@ -68,3 +68,35 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.1);
 }
+
+.action-btn-label {
+  color: #334155;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.dark .action-btn-label {
+  color: #e5e7eb;
+  text-shadow: none;
+}
+
+.brand-ai-text {
+  color: #334155;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.brand-subtitle {
+  color: #475569;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.ui-label {
+  color: #334155;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.dark .brand-ai-text,
+.dark .brand-subtitle,
+.dark .ui-label {
+  color: #e5e7eb;
+  text-shadow: none;
+}
