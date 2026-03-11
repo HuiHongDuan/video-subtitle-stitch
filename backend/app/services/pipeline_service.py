@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import shutil
 import threading
 from pathlib import Path
@@ -15,6 +16,7 @@ from app.services.job_store import job_store
 from app.services.upload_store import UploadedAsset, upload_store
 
 ALLOWED_MODEL_SIZES = {'tiny', 'base', 'small', 'medium'}
+logger = logging.getLogger(__name__)
 
 
 def _app_settings() -> AppSettings:
@@ -126,4 +128,5 @@ def _run_job(job_id: str, video_path: str, workdir: str, remove_audio: bool, mod
         )
         job_store.update(job_id, status='completed', stage='done', progress=100, result=payload)
     except Exception as exc:
+        logger.exception('Job failed: job_id=%s, video_path=%s, workdir=%s', job_id, video_path, workdir)
         job_store.update(job_id, status='failed', stage='failed', progress=100, error=str(exc))
