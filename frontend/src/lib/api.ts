@@ -29,11 +29,21 @@ export async function uploadFile(file: File): Promise<UploadResponse> {
   return parseResponse<UploadResponse>(resp);
 }
 
-export async function createJob(uploadId: string, removeAudio: boolean, modelSize: string): Promise<CreateJobResponse> {
+export async function createJob(
+  uploadId: string,
+  removeAudio: boolean,
+  modelSize: string,
+  clipStartSec = 0,
+  clipEndSec?: number | null,
+): Promise<CreateJobResponse> {
   const form = new FormData();
   form.append('upload_id', uploadId);
   form.append('remove_audio', String(removeAudio));
   form.append('model_size', modelSize);
+  form.append('clip_start_sec', String(clipStartSec));
+  if (typeof clipEndSec === 'number' && Number.isFinite(clipEndSec)) {
+    form.append('clip_end_sec', String(clipEndSec));
+  }
 
   const resp = await fetch(`${API_BASE_URL}/api/v1/jobs`, { method: 'POST', body: form });
   return parseResponse<CreateJobResponse>(resp);

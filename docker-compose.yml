@@ -12,16 +12,19 @@ services:
       MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-500}
       DEFAULT_MODEL_SIZE: ${DEFAULT_MODEL_SIZE:-small}
       WORKDIR_ROOT: /data/workdir
-      FONTSIZE_RATIO: ${FONTSIZE_RATIO:-0.05}
-      FONTSIZE_MIN: ${FONTSIZE_MIN:-18}
-      FONTSIZE_MAX: ${FONTSIZE_MAX:-56}
-      MARGINV_RATIO: ${MARGINV_RATIO:-0.06}
-      MARGINV_MIN: ${MARGINV_MIN:-24}
-      MARGINV_MAX: ${MARGINV_MAX:-80}
+      ASR_MODEL_ROOT: /app/models
+      FONTSIZE_RATIO: ${FONTSIZE_RATIO:-0.032}
+      FONTSIZE_MIN: ${FONTSIZE_MIN:-14}
+      FONTSIZE_MAX: ${FONTSIZE_MAX:-40}
+      MARGINV_RATIO: ${MARGINV_RATIO:-0.035}
+      MARGINV_MIN: ${MARGINV_MIN:-14}
+      MARGINV_MAX: ${MARGINV_MAX:-52}
+      SUBTITLE_FONT_NAME: ${SUBTITLE_FONT_NAME:-Noto Sans CJK SC}
     ports:
       - "8000:8000"
     volumes:
       - ./backend/workdir:/data/workdir
+      - ./backend/models:/app/models
       - whisper_cache:/root/.cache/huggingface
 
   frontend:

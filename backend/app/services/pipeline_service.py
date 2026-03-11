@@ -9,13 +9,16 @@ from uuid import uuid4
 from fastapi import UploadFile
 
 from app.core.config import settings
+from app.domain.asr import normalize_model_size, resolve_local_model_path
 from app.domain.pipeline import run_pipeline
 from app.domain.settings import AppSettings
+from app.domain.video import export_silent_video, probe_duration, trim_video
 from app.models.schemas import JobResult, JobState
 from app.services.job_store import job_store
 from app.services.upload_store import UploadedAsset, upload_store
 
-ALLOWED_MODEL_SIZES = {'tiny', 'base', 'small', 'medium'}
+ALLOWED_MODEL_SIZES = {'tiny', 'base', 'small', 'medium', 'large', 'larger', 'large-v3'}
+PREFERRED_MODEL_SIZES = ('tiny', 'base', 'small', 'medium', 'large')
 logger = logging.getLogger(__name__)
 
 
@@ -29,6 +32,7 @@ def _app_settings() -> AppSettings:
         marginv_ratio=settings.marginv_ratio,
         marginv_min=settings.marginv_min,
         marginv_max=settings.marginv_max,
+        subtitle_font_name=settings.subtitle_font_name,
     )
 
 
@@ -36,6 +40,28 @@ def validate_model_size(model_size: str) -> str:
     if model_size not in ALLOWED_MODEL_SIZES:
         raise ValueError(f'model_size must be one of {sorted(ALLOWED_MODEL_SIZES)}')
     return model_size
+
+
+def list_available_models() -> list[str]:
+    model_root = settings.asr_model_root
+    available: list[str] = []
+
+    for option in PREFERRED_MODEL_SIZES:
+        canonical = normalize_model_size(option)
+        candidates = [
+            Path(option),
+            Path(canonical),
+            Path(model_root) / option,
+            Path(model_root) / canonical,
+            Path(model_root) / f'faster-whisper-{option}',
+            Path(model_root) / f'faster-whisper-{canonical}',
+            Path(model_root) / f'whisper-{option}',
+            Path(model_root) / f'whisper-{canonical}',
+        ]
+        if any(p.exists() for p in candidates):
+            available.append(option)
+
+    return available if available else list(PREFERRED_MODEL_SIZES)
 
 
 def save_upload(file: UploadFile) -> UploadedAsset:
@@ -64,16 +90,31 @@ def save_upload(file: UploadFile) -> UploadedAsset:
     return asset
 
 
-def create_job_from_upload(file: UploadFile, remove_audio: bool, model_size: str) -> JobState:
+def create_job_from_upload(
+    file: UploadFile, remove_audio: bool, model_size: str, clip_start_sec: float = 0.0, clip_end_sec: float | None = None
+) -> JobState:
     asset = save_upload(file)
-    return create_job_from_upload_id(upload_id=asset.upload_id, remove_audio=remove_audio, model_size=model_size)
+    return create_job_from_upload_id(
+        upload_id=asset.upload_id,
+        remove_audio=remove_audio,
+        model_size=model_size,
+        clip_start_sec=clip_start_sec,
+        clip_end_sec=clip_end_sec,
+    )
 
 
-def create_job_from_upload_id(upload_id: str, remove_audio: bool, model_size: str) -> JobState:
+def create_job_from_upload_id(
+    upload_id: str, remove_audio: bool, model_size: str, clip_start_sec: float = 0.0, clip_end_sec: float | None = None
+) -> JobState:
     validate_model_size(model_size)
     asset = upload_store.get(upload_id)
     if not asset:
         raise ValueError('upload_id not found')
+
+    if clip_start_sec < 0:
+        raise ValueError('clip_start_sec must be >= 0')
+    if clip_end_sec is not None and clip_end_sec <= clip_start_sec:
+        raise ValueError('clip_end_sec must be greater than clip_start_sec')
 
     job_id = str(uuid4())
     workdir = Path(settings.workdir_root) / job_id
@@ -92,6 +133,8 @@ def create_job_from_upload_id(upload_id: str, remove_audio: bool, model_size: st
             'workdir': str(workdir),
             'remove_audio': remove_audio,
             'model_size': model_size,
+            'clip_start_sec': clip_start_sec,
+            'clip_end_sec': clip_end_sec,
         },
         daemon=True,
     )
@@ -99,15 +142,37 @@ def create_job_from_upload_id(upload_id: str, remove_audio: bool, model_size: st
     return state
 
 
-def _run_job(job_id: str, video_path: str, workdir: str, remove_audio: bool, model_size: str) -> None:
+def _run_job(
+    job_id: str,
+    video_path: str,
+    workdir: str,
+    remove_audio: bool,
+    model_size: str,
+    clip_start_sec: float = 0.0,
+    clip_end_sec: float | None = None,
+) -> None:
     try:
         job_store.update(job_id, status='processing', stage='probe', progress=10)
-        job_store.update(job_id, stage='extract_audio', progress=25)
-        job_store.update(job_id, stage='asr', progress=45)
-        job_store.update(job_id, stage='render', progress=70)
+        input_duration = probe_duration(video_path)
+        clip_start = max(0.0, float(clip_start_sec))
+        clip_end = input_duration if clip_end_sec is None else min(float(clip_end_sec), input_duration)
+
+        if clip_end - clip_start < 0.2:
+            raise RuntimeError('clip range is too short, please keep at least 0.2s')
+
+        pipeline_video_path = video_path
+        if clip_start > 0.0 or clip_end < input_duration:
+            job_store.update(job_id, stage='clip', progress=22)
+            clipped_path = Path(workdir) / 'input_clip.mp4'
+            trim_video(video_path=video_path, output_path=str(clipped_path), start_sec=clip_start, end_sec=clip_end)
+            pipeline_video_path = str(clipped_path)
+
+        job_store.update(job_id, stage='extract_audio', progress=35)
+        job_store.update(job_id, stage='asr', progress=50)
+        job_store.update(job_id, stage='render', progress=75)
 
         result = run_pipeline(
-            video_path=video_path,
+            video_path=pipeline_video_path,
             workdir=workdir,
             model_size=model_size,
             remove_audio=remove_audio,
@@ -115,15 +180,34 @@ def _run_job(job_id: str, video_path: str, workdir: str, remove_audio: bool, mod
             max_lines=2,
             settings=_app_settings(),
         )
+        job_store.update(job_id, stage='export_silent', progress=90)
+        silent_clean_path = Path(workdir) / 'silent_clean.mp4'
+        export_silent_video(pipeline_video_path, str(silent_clean_path))
+
+        source_duration = probe_duration(pipeline_video_path)
+        output_duration = probe_duration(result['output_video_path'])
+        silent_duration = probe_duration(str(silent_clean_path))
+        tolerance_sec = 1.0
+        if abs(output_duration - source_duration) > tolerance_sec:
+            raise RuntimeError(f'output video duration mismatch: input={source_duration:.2f}s output={output_duration:.2f}s')
+        if abs(silent_duration - source_duration) > tolerance_sec:
+            raise RuntimeError(f'silent video duration mismatch: input={source_duration:.2f}s output={silent_duration:.2f}s')
 
         payload = JobResult(
             resolution=result['resolution'],
             fontsize=result['fontsize'],
             margin_v=result['margin_v'],
             segments=result['segments'],
+            model_path=result.get('model_path') or (resolve_local_model_path(model_size) or '(unknown)'),
+            model_size=result.get('model_size') or model_size,
+            input_duration=source_duration,
+            output_duration=output_duration,
+            silent_duration=silent_duration,
+            clip_range_sec=[clip_start, clip_end],
             download_urls={
                 'srt': f'/api/v1/jobs/{job_id}/files/subtitles',
                 'video': f'/api/v1/jobs/{job_id}/files/video',
+                'silent': f'/api/v1/jobs/{job_id}/files/video_silent',
             },
         )
         job_store.update(job_id, status='completed', stage='done', progress=100, result=payload)

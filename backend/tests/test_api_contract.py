@@ -21,7 +21,7 @@ def test_models_endpoint():
     resp = client.get('/api/v1/models')
     assert resp.status_code == 200
     payload = resp.json()
-    assert payload['default'] in {'tiny', 'base', 'small', 'medium'}
+    assert payload['default'] in {'tiny', 'base', 'small', 'medium', 'large'}
     assert len(payload['options']) >= 1
 
 

@@ -2,7 +2,7 @@ from typing import Literal, Optional
 from pydantic import BaseModel
 
 JobStatus = Literal['queued', 'processing', 'completed', 'failed']
-JobStage = Literal['queued', 'probe', 'extract_audio', 'asr', 'render', 'done', 'failed']
+JobStage = Literal['queued', 'probe', 'clip', 'extract_audio', 'asr', 'render', 'export_silent', 'done', 'failed']
 
 class CreateJobResponse(BaseModel):
     job_id: str
@@ -28,6 +28,12 @@ class JobResult(BaseModel):
     fontsize: int
     margin_v: int
     segments: int
+    model_path: str
+    model_size: str
+    input_duration: float
+    output_duration: float
+    silent_duration: float
+    clip_range_sec: list[float]
     download_urls: dict[str, str]
 
 class JobState(BaseModel):

@@ -1,5 +1,5 @@
 export type JobStatus = 'queued' | 'processing' | 'completed' | 'failed';
-export type JobStage = 'queued' | 'probe' | 'extract_audio' | 'asr' | 'render' | 'done' | 'failed';
+export type JobStage = 'queued' | 'probe' | 'clip' | 'extract_audio' | 'asr' | 'render' | 'export_silent' | 'done' | 'failed';
 
 export interface ErrorResponse {
   error: string;
@@ -27,7 +27,13 @@ export interface JobResult {
   fontsize: number;
   margin_v: number;
   segments: number;
-  download_urls: { srt: string; video: string };
+  model_path: string;
+  model_size: string;
+  input_duration: number;
+  output_duration: number;
+  silent_duration: number;
+  clip_range_sec: [number, number];
+  download_urls: { srt: string; video: string; silent: string };
 }
 
 export interface JobState {

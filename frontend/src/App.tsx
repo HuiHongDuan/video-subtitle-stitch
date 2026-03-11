@@ -9,8 +9,10 @@ const ACCEPTED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/x-matroska'
 export default function App() {
   const [isDark, setIsDark] = useState(false);
   const [removeAudio, setRemoveAudio] = useState(true);
-  const [modelOptions, setModelOptions] = useState<string[]>(['tiny', 'base', 'small', 'medium']);
+  const [modelOptions, setModelOptions] = useState<string[]>(['tiny', 'base', 'small', 'medium', 'large']);
   const [modelSize, setModelSize] = useState('small');
+  const [clipStartSec, setClipStartSec] = useState('0');
+  const [clipEndSec, setClipEndSec] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -55,8 +57,16 @@ export default function App() {
     try {
       setIsSubmitting(true);
       setSubmitError(null);
+      const start = Number.parseFloat(clipStartSec || '0');
+      const end = clipEndSec.trim() ? Number.parseFloat(clipEndSec) : Number.NaN;
+      if (!Number.isFinite(start) || start < 0) {
+        throw new Error('剪辑开始秒数必须是大于等于 0 的数字');
+      }
+      if (clipEndSec.trim() && (!Number.isFinite(end) || end <= start)) {
+        throw new Error('剪辑结束秒数必须大于开始秒数');
+      }
       const upload = await uploadFile(file);
-      const created = await createJob(upload.upload_id, removeAudio, modelSize);
+      const created = await createJob(upload.upload_id, removeAudio, modelSize, start, Number.isFinite(end) ? end : null);
       setJobId(created.job_id);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : '提交失败');
@@ -67,6 +77,7 @@ export default function App() {
 
   const videoUrl = job?.result?.download_urls?.video ? resolveDownloadUrl(job.result.download_urls.video) : null;
   const srtUrl = job?.result?.download_urls?.srt ? resolveDownloadUrl(job.result.download_urls.srt) : null;
+  const silentUrl = job?.result?.download_urls?.silent ? resolveDownloadUrl(job.result.download_urls.silent) : null;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6 text-gray-900 dark:text-gray-100">
@@ -130,6 +141,33 @@ export default function App() {
             </div>
           </div>
 
+          <div className="w-full mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label className="flex flex-col gap-2 text-sm text-gray-700 dark:text-gray-300">
+              剪辑开始秒数
+              <input
+                type="number"
+                min="0"
+                step="0.1"
+                value={clipStartSec}
+                onChange={(e) => setClipStartSec(e.target.value)}
+                className="glass-input rounded-xl px-3 py-2 border border-white/50 dark:border-white/10 bg-transparent"
+                placeholder="0"
+              />
+            </label>
+            <label className="flex flex-col gap-2 text-sm text-gray-700 dark:text-gray-300">
+              剪辑结束秒数（可留空=到结尾）
+              <input
+                type="number"
+                min="0"
+                step="0.1"
+                value={clipEndSec}
+                onChange={(e) => setClipEndSec(e.target.value)}
+                className="glass-input rounded-xl px-3 py-2 border border-white/50 dark:border-white/10 bg-transparent"
+                placeholder=""
+              />
+            </label>
+          </div>
+
           <button
             disabled={!file || isSubmitting}
             onClick={handleSubmit}
@@ -145,11 +183,12 @@ export default function App() {
 
             {job?.result && (
               <div className="text-xs text-center text-gray-600 dark:text-gray-400">
-                分辨率：{job.result.resolution.width}×{job.result.resolution.height} · 字号：{job.result.fontsize} · MarginV：{job.result.margin_v} · 段数：{job.result.segments}
+                分辨率：{job.result.resolution.width}×{job.result.resolution.height} · 字号：{job.result.fontsize} ·
+                MarginV：{job.result.margin_v} · 段数：{job.result.segments} · 模型：{job.result.model_size}
               </div>
             )}
 
-            <div className="flex w-full gap-4">
+            <div className="flex w-full gap-4 flex-wrap">
               <a
                 href={videoUrl ?? '#'}
                 className={`flex-1 flex items-center justify-center gap-3 py-4 px-6 rounded-2xl glass-input border border-white/50 dark:border-white/10 transition-all duration-300 group ${videoUrl ? 'hover:border-blue-400 hover:shadow-[0_0_15px_rgba(96,165,250,0.5)]' : 'pointer-events-none opacity-50'}`}
@@ -163,6 +202,13 @@ export default function App() {
               >
                 <FileText className="w-6 h-6 text-fuchsia-500" />
                 <span className="font-semibold text-gray-800 dark:text-gray-100">下载字幕</span>
+              </a>
+              <a
+                href={silentUrl ?? '#'}
+                className={`flex-1 flex items-center justify-center gap-3 py-4 px-6 rounded-2xl glass-input border border-white/50 dark:border-white/10 transition-all duration-300 group ${silentUrl ? 'hover:border-emerald-400 hover:shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'pointer-events-none opacity-50'}`}
+              >
+                <Download className="w-6 h-6 text-emerald-500" />
+                <span className="font-semibold text-gray-800 dark:text-gray-100">下载无声无字幕版</span>
               </a>
             </div>
           </div>

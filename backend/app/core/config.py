@@ -9,18 +9,20 @@ class Settings(BaseSettings):
     max_upload_mb: int = 500
     default_model_size: str = 'small'
     workdir_root: str = './workdir'
+    asr_model_root: str = '/app/models'
 
-    fontsize_ratio: float = 0.05
-    fontsize_min: int = 18
-    fontsize_max: int = 56
-    marginv_ratio: float = 0.06
-    marginv_min: int = 24
-    marginv_max: int = 80
+    fontsize_ratio: float = 0.032
+    fontsize_min: int = 14
+    fontsize_max: int = 40
+    marginv_ratio: float = 0.035
+    marginv_min: int = 14
+    marginv_max: int = 52
+    subtitle_font_name: str = 'Noto Sans CJK SC'
 
     @field_validator('default_model_size')
     @classmethod
     def validate_model_size(cls, v: str) -> str:
-        allowed = {'tiny', 'base', 'small', 'medium'}
+        allowed = {'tiny', 'base', 'small', 'medium', 'large', 'larger', 'large-v3'}
         if v not in allowed:
             raise ValueError(f'default_model_size must be one of {allowed}')
         return v

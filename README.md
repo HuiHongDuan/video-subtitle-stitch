@@ -16,11 +16,13 @@
 
 ## 功能覆盖
 - ✅ 上传视频
-- ✅ 选择模型（tiny/base/small/medium）
+- ✅ 选择模型（tiny/base/small/medium/large，本地目录自动发现）
 - ✅ 选择是否静音输出
+- ✅ 按秒数剪辑后再生成字幕
 - ✅ 创建任务并轮询状态
 - ✅ 下载 SRT
 - ✅ 下载烧录视频
+- ✅ 下载无声无字幕视频
 - ✅ 统一错误返回
 
 ## API 概览
@@ -31,6 +33,7 @@
 - `GET /api/v1/jobs/{job_id}`
 - `GET /api/v1/jobs/{job_id}/files/subtitles`
 - `GET /api/v1/jobs/{job_id}/files/video`
+- `GET /api/v1/jobs/{job_id}/files/video_silent`
 
 ## 本地启动
 ### 1) Backend
@@ -76,7 +79,13 @@ docker compose up -d --build
 - backend 容器内自带 `ffmpeg` 与 Python 依赖，不污染宿主机。
 - frontend 容器内自带 Node/npm，不依赖宿主机 npm。
 - `./backend/workdir` 挂载到容器 `/data/workdir`，产物会保存在本地仓库。
+- `./backend/models` 挂载到容器 `/app/models`，用于读取本地 fast-whisper 模型目录。
 - `whisper_cache` volume 用于缓存模型，避免重复下载。
+
+模型目录建议：
+- `./backend/models/small`
+- `./backend/models/medium`
+- `./backend/models/large` 或 `./backend/models/large-v3`
 
 ## macOS 一键安装与启动
 ```bash
@@ -95,6 +104,7 @@ docker compose up -d --build
 - `MAX_UPLOAD_MB`
 - `DEFAULT_MODEL_SIZE`
 - `WORKDIR_ROOT`
+- `ASR_MODEL_ROOT`
 - `CORS_ORIGINS`
 - `VITE_API_BASE_URL`
 
@@ -118,3 +128,4 @@ npm run build
 3. **ffmpeg/ffprobe 不存在**：请先在系统安装 ffmpeg（`./scripts/install_macos.sh` 会自动安装）。
 4. **ASR 下载模型慢**：首次运行 `faster-whisper` 可能需要下载模型。
 5. **smoke test 被跳过**：仓库默认不附带大视频样例，补充到 `backend/tests/assets/sample_3min.mp4` 即可运行。
+6. **字幕显示方框**：请重建 backend 镜像（`docker compose up -d --build backend`）。镜像内已安装 `fonts-noto-cjk`，默认字幕字体为 `Noto Sans CJK SC`（可通过 `SUBTITLE_FONT_NAME` 调整）。
