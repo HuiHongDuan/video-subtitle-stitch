@@ -13,3 +13,7 @@ workdir/
 .env
 .env.local
 .DS_Store
+
+# Local ASR models (keep directory marker only)
+backend/models/*
+!backend/models/.gitkeep
