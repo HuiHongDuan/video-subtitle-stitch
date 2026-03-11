@@ -58,6 +58,10 @@ npm run dev
 
 # 查看日志
 ./scripts/docker_logs.sh
+# 或只看后端/前端
+./scripts/docker_logs.sh backend
+./scripts/docker_logs.sh frontend
+./scripts/docker_logs.sh all
 
 # 停止
 ./scripts/docker_down.sh
