@@ -1,5 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Film, VolumeX, Volume2, FileText, Sun, Moon, Upload, Download } from 'lucide-react';
+import Slider from 'rc-slider';
+import 'rc-slider/assets/index.css';
 import { createJob, listModels, resolveDownloadUrl, uploadFile } from './lib/api';
 import { useJobPolling } from './hooks/useJobPolling';
 import { StatusBadge } from './components/StatusBadge';
@@ -11,12 +13,21 @@ export default function App() {
   const [removeAudio, setRemoveAudio] = useState(true);
   const [modelOptions, setModelOptions] = useState<string[]>(['tiny', 'base', 'small', 'medium', 'large']);
   const [modelSize, setModelSize] = useState('small');
-  const [clipStartSec, setClipStartSec] = useState('0');
-  const [clipEndSec, setClipEndSec] = useState('');
+
+  const [clipStartSec, setClipStartSec] = useState(0);
+  const [clipEndSec, setClipEndSec] = useState(0);
+  const [durationSec, setDurationSec] = useState(0);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [metadataReady, setMetadataReady] = useState(false);
+
   const [file, setFile] = useState<File | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const previewVideoRef = useRef<HTMLVideoElement | null>(null);
+
   const { job, error: pollingError } = useJobPolling(jobId);
 
   useEffect(() => {
@@ -35,6 +46,14 @@ export default function App() {
       .catch((err) => setSubmitError(err instanceof Error ? err.message : '加载模型配置失败'));
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
   const combinedError = submitError ?? pollingError ?? job?.error ?? null;
   const progressText = useMemo(() => {
     if (!job) return '等待上传视频';
@@ -43,9 +62,73 @@ export default function App() {
     return `处理中 · ${job.stage} · ${job.progress}%`;
   }, [job]);
 
+  function clampTime(value: number) {
+    if (!Number.isFinite(value)) return 0;
+    if (!durationSec || durationSec <= 0) return Math.max(0, value);
+    return Math.max(0, Math.min(value, durationSec));
+  }
+
+  function seekPreview(targetSec: number) {
+    const video = previewVideoRef.current;
+    if (!video) return;
+    video.currentTime = clampTime(targetSec);
+  }
+
+  function handleSelectFile(nextFile: File | null) {
+    setFile(nextFile);
+    setSubmitError(null);
+    setJobId(null);
+
+    setMetadataReady(false);
+    setDurationSec(0);
+    setClipStartSec(0);
+    setClipEndSec(0);
+
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+
+    if (nextFile) {
+      setPreviewUrl(URL.createObjectURL(nextFile));
+    }
+  }
+
+  function handlePreviewMetadataLoaded() {
+    const video = previewVideoRef.current;
+    if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
+
+    const duration = video.duration;
+    setDurationSec(duration);
+    setClipStartSec(0);
+    setClipEndSec(duration);
+    setMetadataReady(true);
+  }
+
+  function handleRangeSlider(next: number | number[]) {
+    if (!Array.isArray(next) || next.length !== 2) return;
+    const start = clampTime(Math.min(next[0], next[1]));
+    const end = clampTime(Math.max(next[0], next[1]));
+    setClipStartSec(start);
+    setClipEndSec(end);
+  }
+
+  function handleRangeAfterChange(next: number | number[]) {
+    if (!Array.isArray(next) || next.length !== 2) return;
+    const start = clampTime(Math.min(next[0], next[1]));
+    const end = clampTime(Math.max(next[0], next[1]));
+    const current = previewVideoRef.current?.currentTime ?? start;
+    const target = Math.abs(current - start) <= Math.abs(current - end) ? start : end;
+    seekPreview(target);
+  }
+
   async function handleSubmit() {
     if (!file) {
       setSubmitError('请先选择视频文件');
+      return;
+    }
+    if (!metadataReady) {
+      setSubmitError('视频元数据尚未加载完成，请稍后重试');
       return;
     }
 
@@ -57,16 +140,10 @@ export default function App() {
     try {
       setIsSubmitting(true);
       setSubmitError(null);
-      const start = Number.parseFloat(clipStartSec || '0');
-      const end = clipEndSec.trim() ? Number.parseFloat(clipEndSec) : Number.NaN;
-      if (!Number.isFinite(start) || start < 0) {
-        throw new Error('剪辑开始秒数必须是大于等于 0 的数字');
-      }
-      if (clipEndSec.trim() && (!Number.isFinite(end) || end <= start)) {
-        throw new Error('剪辑结束秒数必须大于开始秒数');
-      }
+
       const upload = await uploadFile(file);
-      const created = await createJob(upload.upload_id, removeAudio, modelSize, start, Number.isFinite(end) ? end : null);
+      const clipEndArg = clipEndSec >= durationSec - 0.05 ? null : clipEndSec;
+      const created = await createJob(upload.upload_id, removeAudio, modelSize, clipStartSec, clipEndArg);
       setJobId(created.job_id);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : '提交失败');
@@ -93,22 +170,77 @@ export default function App() {
             <h1 className="text-sm font-bold tracking-[0.3em] uppercase brand-subtitle">Subtitles</h1>
           </div>
 
-          <div className="w-full mb-8">
-            <label className="glass-input rounded-2xl border border-white/50 dark:border-white/10 relative overflow-hidden flex flex-col items-center justify-center text-center h-48 shadow-inner cursor-pointer px-6">
-              <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1536240478700-b869070f9279?auto=format&fit=crop&q=80&w=1000')] bg-cover bg-center blur-md opacity-40 dark:opacity-50"></div>
-              <div className="absolute inset-0 bg-white/30 dark:bg-black/40"></div>
-              <div className="relative z-10 flex flex-col items-center">
-                <Film className="w-10 h-10 mb-2 text-gray-800 dark:text-white drop-shadow-lg" />
-                <p className="text-lg font-semibold text-gray-900 dark:text-white drop-shadow-md break-all">{file?.name ?? '选择一个视频文件'}</p>
-                <p className="text-sm mt-2 text-gray-700 dark:text-gray-300 flex items-center gap-2"><Upload className="w-4 h-4" /> 点击上传</p>
+          <div className="w-full mb-6">
+            <div className="glass-input rounded-2xl border border-white/50 dark:border-white/10 relative overflow-hidden shadow-inner min-h-72">
+              {!previewUrl && (
+                <>
+                  <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1536240478700-b869070f9279?auto=format&fit=crop&q=80&w=1000')] bg-cover bg-center blur-md opacity-40 dark:opacity-50"></div>
+                  <div className="absolute inset-0 bg-white/30 dark:bg-black/40"></div>
+                </>
+              )}
+
+              <div className="relative z-10 h-full flex flex-col items-center justify-center px-6 pt-6 pb-20">
+                {!previewUrl ? (
+                  <>
+                    <Film className="w-12 h-12 mb-3 text-gray-800 dark:text-white drop-shadow-lg" />
+                    <p className="text-xl font-semibold text-gray-900 dark:text-white drop-shadow-md break-all">选择一个视频文件</p>
+                    <p className="text-sm mt-2 text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                      <Upload className="w-4 h-4" /> 点击上传
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <video
+                      ref={previewVideoRef}
+                      src={previewUrl}
+                      className="w-full h-48 md:h-56 rounded-xl object-cover border border-white/50 dark:border-white/10"
+                      controls
+                      preload="metadata"
+                      onLoadedMetadata={handlePreviewMetadataLoaded}
+                    />
+                    <p className="mt-3 text-sm ui-label break-all">{file?.name}</p>
+                  </>
+                )}
               </div>
+
+              <div className="absolute left-0 right-0 bottom-4 flex justify-center z-20">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-5 py-2.5 rounded-xl bg-black/70 text-white dark:bg-white/90 dark:text-black font-semibold flex items-center gap-2"
+                >
+                  <Upload className="w-4 h-4" />
+                  {file ? '重新上传视频' : '上传视频'}
+                </button>
+              </div>
+
               <input
+                ref={fileInputRef}
                 type="file"
                 accept="video/mp4,video/mov,video/mkv,video/avi,video/webm"
                 className="hidden"
-                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                onChange={(e) => handleSelectFile(e.target.files?.[0] ?? null)}
               />
-            </label>
+            </div>
+          </div>
+
+          <div className="w-full mb-6 glass-input rounded-2xl border border-white/50 dark:border-white/10 p-5">
+            <div className="flex items-center justify-between text-sm ui-label mb-3">
+              <span>时间剪辑滑条</span>
+              <span>{durationSec > 0 ? `${clipStartSec.toFixed(1)}s - ${clipEndSec.toFixed(1)}s / ${durationSec.toFixed(1)}s` : '等待视频元数据'}</span>
+            </div>
+            <div className="clip-range px-1 py-2">
+              <Slider
+                range
+                min={0}
+                max={Math.max(0, durationSec)}
+                step={0.1}
+                value={[clipStartSec, clipEndSec]}
+                onChange={handleRangeSlider}
+                onChangeComplete={handleRangeAfterChange}
+                disabled={!metadataReady}
+              />
+            </div>
           </div>
 
           <div className="w-full flex items-center justify-between mb-8 px-4 gap-4 flex-wrap">
@@ -141,35 +273,8 @@ export default function App() {
             </div>
           </div>
 
-          <div className="w-full mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <label className="flex flex-col gap-2 text-sm ui-label">
-              剪辑开始秒数
-              <input
-                type="number"
-                min="0"
-                step="0.1"
-                value={clipStartSec}
-                onChange={(e) => setClipStartSec(e.target.value)}
-                className="glass-input rounded-xl px-3 py-2 border border-white/50 dark:border-white/10 bg-transparent"
-                placeholder="0"
-              />
-            </label>
-            <label className="flex flex-col gap-2 text-sm ui-label">
-              剪辑结束秒数（可留空=到结尾）
-              <input
-                type="number"
-                min="0"
-                step="0.1"
-                value={clipEndSec}
-                onChange={(e) => setClipEndSec(e.target.value)}
-                className="glass-input rounded-xl px-3 py-2 border border-white/50 dark:border-white/10 bg-transparent"
-                placeholder=""
-              />
-            </label>
-          </div>
-
           <button
-            disabled={!file || isSubmitting}
+            disabled={!file || !metadataReady || isSubmitting}
             onClick={handleSubmit}
             className="w-full mb-8 py-4 rounded-2xl bg-black/80 text-white dark:bg-white/90 dark:text-black font-semibold disabled:opacity-50"
           >
