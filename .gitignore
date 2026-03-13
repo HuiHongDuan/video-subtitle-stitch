@@ -17,3 +17,9 @@ workdir/
 # Local ASR models (keep directory marker only)
 backend/models/*
 !backend/models/.gitkeep
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
