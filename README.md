@@ -108,6 +108,18 @@ docker compose up -d --build
 - `CORS_ORIGINS`
 - `VITE_API_BASE_URL`
 
+## Cloudflare Pages 部署（同域 API）
+- 将 Pages 项目 Root directory 设置为 `frontend`。
+- 使用 `frontend/functions/api/[[path]].js` 作为 `/api/*` 代理（Pages Functions）。
+- 在 Pages 项目中配置：
+  - `VITE_API_BASE_URL=/api`
+  - `BACKEND_ORIGIN=https://<your-backend-origin>/api`
+- 部署后前端与 API 同域：
+  - `https://<your-pages-project>.pages.dev`
+  - `https://<your-pages-project>.pages.dev/api/v1/models`
+
+详细步骤见 `DEPLOY_LOCAL_MAC_CLOUDFLARE.md`。
+
 ## 测试
 ### backend
 ```bash
