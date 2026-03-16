@@ -6,6 +6,8 @@
 ```text
 .
 ├── backend/                  # FastAPI API + Python subtitle pipeline
+├── deploy/                   # 各部署模式说明：local / cloudflare-tunnel / render
+├── env/                      # 各部署模式环境变量示例
 ├── frontend/                 # React + TypeScript + Vite + Stitch 风格 UI
 ├── scripts/                  # 本地启动 / smoke test 脚本
 ├── ARCHITECTURE.md
@@ -34,6 +36,12 @@
 - `GET /api/v1/jobs/{job_id}/files/subtitles`
 - `GET /api/v1/jobs/{job_id}/files/video`
 - `GET /api/v1/jobs/{job_id}/files/video_silent`
+
+## 部署模式
+- 本地开发：见 [deploy/local/README.md](/Users/collie/workspace/video-subtitle-stitch/deploy/local/README.md)
+- Cloudflare Pages + 本地后端（Tunnel）：见 [deploy/cloudflare-tunnel/README.md](/Users/collie/workspace/video-subtitle-stitch/deploy/cloudflare-tunnel/README.md)
+- Cloudflare Pages + Render 后端：见 [deploy/render/README.md](/Users/collie/workspace/video-subtitle-stitch/deploy/render/README.md)
+- 部署模式总览：见 [deploy/README.md](/Users/collie/workspace/video-subtitle-stitch/deploy/README.md)
 
 ## 本地启动
 ### 1) Backend
@@ -100,7 +108,14 @@ docker compose up -d --build
 - 安装 frontend `node_modules`
 
 ## 环境变量
-复制 `.env.example`，常用项：
+通用默认值仍可参考 `.env.example`。
+
+按部署模式选择更合适的示例：
+- 本地：见 [env/local.example](/Users/collie/workspace/video-subtitle-stitch/env/local.example)
+- Cloudflare Tunnel：见 [env/cloudflare-tunnel.example](/Users/collie/workspace/video-subtitle-stitch/env/cloudflare-tunnel.example)
+- Render：见 [env/render.example](/Users/collie/workspace/video-subtitle-stitch/env/render.example)
+
+常用项：
 - `MAX_UPLOAD_MB`
 - `DEFAULT_MODEL_SIZE`
 - `WORKDIR_ROOT`
@@ -118,7 +133,7 @@ docker compose up -d --build
   - `https://<your-pages-project>.pages.dev`
   - `https://<your-pages-project>.pages.dev/api/v1/models`
 
-详细步骤见 `DEPLOY_LOCAL_MAC_CLOUDFLARE.md`。
+详细步骤见 [deploy/cloudflare-tunnel/README.md](/Users/collie/workspace/video-subtitle-stitch/deploy/cloudflare-tunnel/README.md)。
 
 ## 测试
 ### backend

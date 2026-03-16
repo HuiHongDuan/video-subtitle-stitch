@@ -1,0 +1,23 @@
+# Frontend talks directly to local backend
+# Local-only example:
+# VITE_API_BASE_URL=http://127.0.0.1:8000/api
+#
+# LAN example:
+# VITE_API_BASE_URL=http://192.168.0.207:8000/api
+# CORS_ORIGINS=http://127.0.0.1:3000,http://localhost:3000,http://192.168.0.207:3000
+APP_ENV=development
+APP_HOST=0.0.0.0
+APP_PORT=8000
+CORS_ORIGINS=http://127.0.0.1:3000,http://localhost:3000
+MAX_UPLOAD_MB=500
+DEFAULT_MODEL_SIZE=small
+WORKDIR_ROOT=./backend/workdir
+ASR_MODEL_ROOT=./backend/models
+FONTSIZE_RATIO=0.032
+FONTSIZE_MIN=14
+FONTSIZE_MAX=40
+MARGINV_RATIO=0.035
+MARGINV_MIN=14
+MARGINV_MAX=52
+SUBTITLE_FONT_NAME=Noto Sans CJK SC
+VITE_API_BASE_URL=http://127.0.0.1:8000/api

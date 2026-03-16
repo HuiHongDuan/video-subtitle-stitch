@@ -1,4 +1,4 @@
-.PHONY: backend-install frontend-install backend-dev frontend-dev test smoke docker-up docker-down docker-logs
+.PHONY: backend-install frontend-install backend-dev frontend-dev test smoke docker-up docker-up-lan docker-down docker-logs
 
 backend-install:
 	cd backend && python -m venv .venv && . .venv/bin/activate && python -m pip install -r requirements.txt
@@ -21,6 +21,9 @@ smoke:
 
 docker-up:
 	bash scripts/docker_up.sh
+
+docker-up-lan:
+	bash scripts/docker_up_lan.sh
 
 docker-down:
 	bash scripts/docker_down.sh
