@@ -58,6 +58,13 @@ Use this when you want GitHub Actions to build the backend image once and let Re
 Guide:
 - [deploy/ghcr/README.md](/Users/collie/workspace/video-subtitle-stitch/deploy/ghcr/README.md)
 
+### 5. Self-Hosted Backend Security
+
+Use this when your backend runs on your own machine, VPS, or other self-managed compute platform and you want a practical security baseline.
+
+Guide:
+- [deploy/security/README.md](/Users/collie/workspace/video-subtitle-stitch/deploy/security/README.md)
+
 ## Recommended Usage
 
 - Treat `local` as the development mode

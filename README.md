@@ -42,6 +42,7 @@
 - Cloudflare Pages + 本地后端（Tunnel）：见 [deploy/cloudflare-tunnel/README.md](/Users/collie/workspace/video-subtitle-stitch/deploy/cloudflare-tunnel/README.md)
 - Cloudflare Pages + Render 后端：见 [deploy/render/README.md](/Users/collie/workspace/video-subtitle-stitch/deploy/render/README.md)
 - GHCR 镜像发布与平台拉取：见 [deploy/ghcr/README.md](/Users/collie/workspace/video-subtitle-stitch/deploy/ghcr/README.md)
+- 自托管后端安全清单：见 [deploy/security/README.md](/Users/collie/workspace/video-subtitle-stitch/deploy/security/README.md)
 - 部署模式总览：见 [deploy/README.md](/Users/collie/workspace/video-subtitle-stitch/deploy/README.md)
 
 ## 本地启动
