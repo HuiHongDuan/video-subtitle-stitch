@@ -1,0 +1,18 @@
+# Frontend runs on Cloudflare Pages, backend runs on Render
+APP_ENV=production
+APP_HOST=0.0.0.0
+APP_PORT=8000
+CORS_ORIGINS=https://video-subtitle-stitch.pages.dev
+MAX_UPLOAD_MB=500
+DEFAULT_MODEL_SIZE=small
+WORKDIR_ROOT=/data/workdir
+ASR_MODEL_ROOT=/app/models
+FONTSIZE_RATIO=0.032
+FONTSIZE_MIN=14
+FONTSIZE_MAX=40
+MARGINV_RATIO=0.035
+MARGINV_MIN=14
+MARGINV_MAX=52
+SUBTITLE_FONT_NAME=Noto Sans CJK SC
+VITE_API_BASE_URL=/api
+BACKEND_ORIGIN=https://<your-render-backend>.onrender.com/api

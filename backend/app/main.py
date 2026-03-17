@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -14,6 +16,11 @@ app.add_middleware(
     allow_headers=['*'],
 )
 app.include_router(router)
+
+
+@app.on_event('startup')
+async def ensure_workdir_root() -> None:
+    Path(settings.workdir_root).mkdir(parents=True, exist_ok=True)
 
 
 @app.exception_handler(HTTPException)

@@ -1,6 +1,7 @@
 # TASKS
 
 ## P0
+- [x] 将 Cloudflare API 代理从独立 Worker 迁移到 Pages Functions（同域 `/api/*`）
 - [ ] 跑通 FastAPI 最小 API：创建任务 / 查询任务 / 下载文件
 - [ ] 复用原 pipeline，生成 SRT 与 MP4
 - [ ] React 前端接上上传、轮询、下载

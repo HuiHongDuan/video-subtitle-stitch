@@ -23,6 +23,7 @@ def test_models_endpoint():
     payload = resp.json()
     assert payload['default'] in {'tiny', 'base', 'small', 'medium', 'large'}
     assert len(payload['options']) >= 1
+    assert 'small' in {item['key'] for item in payload['options']}
 
 
 def test_create_job_rejects_invalid_model():

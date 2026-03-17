@@ -49,23 +49,21 @@ def resolve_local_model_path(model_size: str, model_root: str = 'models') -> Opt
     return None
 
 
+def resolve_runtime_model_source(model_size: str) -> tuple[str, bool]:
+    local_model = resolve_local_model_path(model_size)
+    if local_model:
+        return local_model, True
+    return normalize_model_size(model_size), False
+
+
 def transcribe_zh(wav_path: str, model_size: str = 'small') -> list[Segment]:
     from faster_whisper import WhisperModel
 
-    local_model = resolve_local_model_path(model_size)
-    if not local_model:
-        requested = model_size
-        canonical = normalize_model_size(model_size)
-        example = f'backend/models/{canonical}'
-        raise RuntimeError(
-            f"Local Whisper model not found for '{requested}'. "
-            'Please place model files under ASR_MODEL_ROOT (default: /app/models in Docker, ./backend/models on host), '
-            f'for example: {example}.'
-        )
-
-    key = f'local::{local_model}'
+    model_source, is_local = resolve_runtime_model_source(model_size)
+    key_prefix = 'local' if is_local else 'remote'
+    key = f'{key_prefix}::{model_source}'
     if key not in _model_cache:
-        _model_cache[key] = WhisperModel(local_model, device='cpu', compute_type='int8')
+        _model_cache[key] = WhisperModel(model_source, device='cpu', compute_type='int8')
     model = _model_cache[key]
 
     segments, _info = model.transcribe(wav_path, language='zh', vad_filter=True, beam_size=5)

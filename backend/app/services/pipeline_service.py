@@ -9,7 +9,7 @@ from uuid import uuid4
 from fastapi import UploadFile
 
 from app.core.config import settings
-from app.domain.asr import normalize_model_size, resolve_local_model_path
+from app.domain.asr import normalize_model_size, resolve_runtime_model_source
 from app.domain.pipeline import run_pipeline
 from app.domain.settings import AppSettings
 from app.domain.video import export_silent_video, probe_duration, trim_video
@@ -61,6 +61,8 @@ def list_available_models() -> list[str]:
         if any(p.exists() for p in candidates):
             available.append(option)
 
+    # If the service has no bundled local models, allow standard models so
+    # faster-whisper can download them on first use in remote environments.
     return available if available else list(PREFERRED_MODEL_SIZES)
 
 
@@ -198,7 +200,7 @@ def _run_job(
             fontsize=result['fontsize'],
             margin_v=result['margin_v'],
             segments=result['segments'],
-            model_path=result.get('model_path') or (resolve_local_model_path(model_size) or '(unknown)'),
+            model_path=result.get('model_path') or resolve_runtime_model_source(model_size)[0],
             model_size=result.get('model_size') or model_size,
             input_duration=source_duration,
             output_duration=output_duration,

@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Dict
 
-from app.domain.asr import resolve_local_model_path, transcribe_zh
+from app.domain.asr import resolve_runtime_model_source, transcribe_zh
 from app.domain.settings import AppSettings
 from app.domain.subtitles import segments_to_srt
 from app.domain.video import burn_in_subtitles, extract_audio, probe_resolution
@@ -93,7 +93,7 @@ def run_pipeline(
 
     font_name = settings.subtitle_font_name.replace(',', ' ').strip() or 'Noto Sans CJK SC'
     force_style = f'Alignment=2,MarginV={margin_v},Outline=1,Shadow=0,Fontsize={fontsize},FontName={font_name}'
-    model_path = resolve_local_model_path(model_size) or '(fallback)'
+    model_path, _is_local = resolve_runtime_model_source(model_size)
     burn_in_subtitles(video_path=video_path, srt_path=str(srt_path), output_path=str(out_video), remove_audio=remove_audio, force_style=force_style)
 
     return {
