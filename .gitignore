@@ -15,6 +15,10 @@ workdir/
 .env
 .env.local
 .DS_Store
+build-artifacts/*
+!build-artifacts/models/
+build-artifacts/models/*
+!build-artifacts/models/.gitkeep
 
 # Local ASR models (keep directory marker only)
 backend/models/*

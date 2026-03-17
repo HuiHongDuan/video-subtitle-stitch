@@ -51,10 +51,18 @@ Guide:
 Env example:
 - [env/render.example](/Users/collie/workspace/video-subtitle-stitch/env/render.example)
 
+### 4. GHCR Image Pipeline
+
+Use this when you want GitHub Actions to build the backend image once and let Render or Koyeb pull that image directly.
+
+Guide:
+- [deploy/ghcr/README.md](/Users/collie/workspace/video-subtitle-stitch/deploy/ghcr/README.md)
+
 ## Recommended Usage
 
 - Treat `local` as the development mode
 - Treat `cloudflare-tunnel` as a temporary public-debug mode
 - Treat `render` as the production deployment mode
+- Treat `ghcr` as the registry/distribution layer for production backends
 
 This keeps one codebase, one API shape, and one frontend behavior while isolating deployment differences into docs and environment configuration.

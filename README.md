@@ -41,6 +41,7 @@
 - 本地开发：见 [deploy/local/README.md](/Users/collie/workspace/video-subtitle-stitch/deploy/local/README.md)
 - Cloudflare Pages + 本地后端（Tunnel）：见 [deploy/cloudflare-tunnel/README.md](/Users/collie/workspace/video-subtitle-stitch/deploy/cloudflare-tunnel/README.md)
 - Cloudflare Pages + Render 后端：见 [deploy/render/README.md](/Users/collie/workspace/video-subtitle-stitch/deploy/render/README.md)
+- GHCR 镜像发布与平台拉取：见 [deploy/ghcr/README.md](/Users/collie/workspace/video-subtitle-stitch/deploy/ghcr/README.md)
 - 部署模式总览：见 [deploy/README.md](/Users/collie/workspace/video-subtitle-stitch/deploy/README.md)
 
 ## 本地启动

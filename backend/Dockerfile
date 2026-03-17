@@ -15,6 +15,7 @@ COPY backend/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r /app/requirements.txt
 
+COPY build-artifacts/models /app/models
 COPY backend /app
 
 EXPOSE 8000
