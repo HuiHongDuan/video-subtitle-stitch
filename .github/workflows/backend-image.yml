@@ -3,9 +3,9 @@ name: Publish Backend Image
 on:
   push:
     branches:
-      - main
+      # - main
       - master
-      - cloud_flare_test_clean
+      # - cloud_flare_test_clean
     tags:
       - 'v*'
   workflow_dispatch:
